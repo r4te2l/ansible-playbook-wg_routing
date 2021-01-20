@@ -1,0 +1,25 @@
+---
+- name: ubuntu_hwe
+  src: https://github.com/r4te2l/ansible-role-ubuntu_hwe.git
+  scm: git
+  version: wgu_capstone
+
+- name: sysctl
+  src: https://github.com/r4te2l/ansible-role-sysctl.git
+  scm: git
+  version: wgu_capstone
+
+- name: wireguard
+  src: https://github.com/r4te2l/ansible-role-wireguard.git
+  scm: git
+  version: wgu_capstone
+
+- name: frr
+  src: https://github.com/r4te2l/ansible-role-frr.git
+  scm: git
+  version: wgu_capstone
+
+- name: netplan
+  src: https://github.com/r4te2l/ansible-role-netplan.git
+  scm: git
+  version: wgu_capstone
