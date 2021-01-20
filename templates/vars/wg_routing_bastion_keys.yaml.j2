@@ -1,0 +1,9 @@
+{% for host, vars in hostvars | dictsort %}
+{% if wg_routing_mesh_group in vars.group_names %}
+{% if vars.wgr_params is defined %}
+{% for interface, interfacev in vars.wgr_params | dictsort %}
+- "{{ host }}/{{ interface }}"
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}

@@ -1,0 +1,35 @@
+---
+- name: 'Define wg_routing_mesh_group'
+  set_fact:
+    wg_routing_mesh_group: "{{ __wg_routing_mesh_group }}"
+  when: wg_routing_mesh_group is not defined
+
+- name: 'Define wg_routing_hide_private_key'
+  set_fact:
+    wg_routing_hide_private_key: "{{ __wg_routing_hide_private_key }}"
+  when: wg_routing_hide_private_key is not defined
+
+- name: 'Define wg_routing_hide_private_key'
+  set_fact:
+    wg_hide_private_key: "{{ wg_routing_hide_private_key }}"
+
+- name: 'Define bastion_key_path'
+  set_fact:
+    bastion_key_path: "{{ __bastion_key_path }}"
+  when: bastion_key_path is not defined
+
+- name: 'Bastion : Define wg_routing_bastion_keys'
+  set_fact:
+    wg_routing_bastion_keys: "{{ lookup('template', 'templates/vars/wg_routing_bastion_keys.yaml.j2') | from_yaml }}"
+
+- name: 'Define sysctl_params'
+  set_fact:
+    sysctl_params: "{{ __sysctl_params }}"
+  when: sysctl_params is not defined
+
+- name: 'Define wg_routing_packages'
+  set_fact:
+    wg_routing_packages: "{{ __wg_routing_packages }}"
+  when:
+    - wg_routing_packages is not defined
+    - __wg_routing_packages is defined

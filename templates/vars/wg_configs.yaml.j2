@@ -1,0 +1,103 @@
+{% if wgr_params is defined %}
+{% for interface, interfacev in wgr_params | dictsort %}
+{{ interface }}:
+  interface:
+    ListenPort: {{ interfacev.ListenPort | default('51820') }}
+    PrivateKey:
+{%- for pkey in wg_routing_private_keys.results %}
+{%- if pkey.wg_interface.key == interface %}
+ {{ pkey.content | b64decode }}
+{%- endif %}
+{%- endfor %}
+{% if interfacev.Address is defined %}
+    Address: {{ interfacev.Address }}
+{% endif %}
+{% if interfacev.FwMark is defined %}
+    FwMark: {{ interfacev.FwMark }}
+{% endif %}
+{% if interfacev.DNS is defined %}
+    DNS: {{ interfacev.DNS }}
+{% endif %}
+{% if interfacev.MTU is defined %}
+    MTU: {{ interfacev.MTU }}
+{% endif %}
+{% if interfacev.Table is defined %}
+    Table: {{ interfacev.Table }}
+{% endif %}
+    SaveConfig: false
+    PreUp:
+{% if interfacev.PreUp is defined %}
+{% for command in interfacev.PreUp %}
+      - {{ command }}
+{% endfor %}
+{% endif %}
+      - ip link delete dev vxlan%i || true
+      - ip link delete dev br%i || true
+    PostUp:
+{% if interfacev.PostUp is defined %}
+{% for command in interfacev.PostUp %}
+      - {{ command }}
+{% endfor %}
+{% endif %}
+      - ip link add vxlan%i type vxlan id {{ interfacev.EIGRPRouterID }} dstport 4789 local {{ interfacev.Address | ansible.netcommon.ipaddr('address') }}
+{% for host, vars in hostvars | dictsort %}
+{% if wg_routing_mesh_group in vars.group_names %}
+{% if vars.wgr_params is defined %}
+{% for i, iv in vars.wgr_params | dictsort %}
+{% if interfacev.EIGRPRouterID == iv.EIGRPRouterID and not interfacev.Address == iv.Address %}
+      - bridge fdb append 00:00:00:00:00:00 dev vxlan%i dst {{ iv.Address | ansible.netcommon.ipaddr('address') }}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}
+      - brctl addbr br%i
+      - brctl addif br%i vxlan%i
+      - brctl stp br%i off
+      - ip address add {{ interfacev.RouterAddress }} dev br%i
+      - ip link set up dev br%i
+      - ip link set up dev vxlan%i
+{% if interfacev.PreDown is defined %}
+    PreDown:
+{% for command in interfacev.PreDown %}
+      - {{ command }}
+{% endfor %}
+{% endif %}
+    PostDown:
+{% if interfacev.PostDown is defined %}
+{% for command in interfacev.PostDown %}
+      - {{ command }}
+{% endfor %}
+{% endif %}
+      - ip link delete dev vxlan%i
+      - ip link delete dev br%i
+  peer:
+{% for host, vars in hostvars | dictsort %}
+{% if wg_routing_mesh_group in vars.group_names %}
+{% if vars.wgr_params is defined %}
+{% for i, iv in vars.wgr_params | dictsort %}
+{% if interfacev.EIGRPRouterID == iv.EIGRPRouterID and not interfacev.Address == iv.Address %}
+{% for pubkey in wg_routing_public_keys.results %}
+{% if pubkey.wg_key_path == ( host ~ '/' ~ i ) %}
+    {{ host }}:
+      PublicKey: {{ pubkey.content | b64decode }}
+{% if iv.PresharedKey is defined %}
+      PresharedKey: {{ iv.PresharedKey }}
+{% endif %}
+      AllowedIPs:
+        - {{ ( iv.Address | ansible.netcommon.ipaddr('address') ) ~ '/32' }}
+{% if iv.PublicEndpoint | default(true) %}
+      Endpoint: {{ host ~ ':' ~ iv.ListenPort }}
+{% endif %}
+{% if iv.PersistentKeepalive is defined or ( not iv.PublicEndpoint | default(true) ) %}
+      PersistentKeepalive: {{ iv.PersistentKeepalive | default('25') }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% endfor %}
+{% endif %}

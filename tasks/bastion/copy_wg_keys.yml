@@ -1,0 +1,23 @@
+---
+- name: 'copy private keys'
+  slurp:
+    src: "{{ bastion_key_path }}/{{ inventory_hostname }}/{{ wg_interface.key }}/privatekey"
+  loop: "{{ wgr_params | dict2items }}"
+  loop_control:
+    loop_var: wg_interface
+  register: wg_routing_private_keys
+  when: wgr_params is defined
+  delegate_to: "{{ wb_bastion_host }}"
+  no_log: "{{ wg_routing_hide_private_key }}"
+  become: true
+
+- name: 'copy public keys'
+  slurp:
+    src: "{{ bastion_key_path }}/{{ wg_key_path }}/publickey"
+  loop: "{{ wg_routing_bastion_keys }}"
+  loop_control:
+    loop_var: wg_key_path
+  register: wg_routing_public_keys
+  delegate_to: "{{ wb_bastion_host }}"
+  run_once: true
+  become: true

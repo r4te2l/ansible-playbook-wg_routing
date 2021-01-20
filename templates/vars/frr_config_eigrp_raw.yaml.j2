@@ -1,0 +1,40 @@
+{% if wg_routing_mesh_group in group_names %}
+{% if wgr_params is defined %}
+{% for interface, interfacev in wgr_params | dictsort %}
+router eigrp {{ interfacev.EIGRPRouterID }}
+{% if interfacev.EIGRPRouterAuto | default(true) %}
+{% for i in ansible_facts.interfaces %}
+{%
+   if i not in interfacev.EIGRPRouterBlackListedInterfaces | default([])
+  and i != ansible_facts.default_ipv4.interface | default('')
+  and i != ansible_facts.default_ipv6.interface | default('')
+  and i != 'lo'
+%}
+{# talk eigrp on router network, passive on everything else #}
+{% if ansible_facts[i]['ipv4']['address'] is defined %}
+  network {{ (ansible_facts[i]['ipv4']['address'] ~ '/' ~ ansible_facts[i]['ipv4']['netmask']) | ansible.netcommon.ipv4('network/prefix') }}
+{% endif %}
+{% if ansible_facts[i]['ipv6']['address'] is defined %}
+  network {{ (ansible_facts[i]['ipv6']['address'] ~ '/' ~ ansible_facts[i]['ipv6']['prefix']) | ansible.netcommon.ipv6('network/prefix') }}
+{% endif %}
+{%
+  if not (
+       interfacev.RouterAddress == (ansible_facts[i]['ipv4']['address'] | default('') ~ '/' ~ ansible_facts[i]['ipv4']['netmask'] | default('')) | ansible.netcommon.ipv4('host/prefix')
+    or interfacev.RouterAddress == (ansible_facts[i]['ipv6']['address'] | default('') ~ '/' ~ ansible_facts[i]['ipv6']['netmask'] | default('')) | ansible.netcommon.ipv6('host/prefix')
+  )
+%}
+  passive-interface {{ i }}
+{% endif %}
+{% endif %}
+{% endfor %}
+{% else %}
+{% for nw in interfacesv.EIGRPRouterNetworks | default([]) %}
+  network {{ nw }}
+{% endfor %}
+{% for pi in interfacesv.EIGRPRouterPassiveInterfaces | default([]) %}
+  passive-interface {{ pi }}
+{% endfor %}
+{% endif %}
+{% endfor %}
+{% endif %}
+{% endif %}

@@ -1,0 +1,9 @@
+---
+- name: "Install prerequisite packages"
+  package:
+    name: "{{ item }}"
+    state: 'present'
+  loop: "{{ wg_routing_packages }}"
+  when:
+    wg_routing_packages is defined
+  become: true

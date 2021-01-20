@@ -1,0 +1,101 @@
+---
+all:
+  children:
+    wg_routing_mesh:
+      vars:
+        wb_bastion_host: 'wgr-bastion'
+        wg_routing_hide_private_key: false
+      hosts:
+        wgr-bastion:
+          ansible_host: 192.0.2.99
+          ansible_ssh_private_key_file: .vagrant/machines/wgr-bastion/virtualbox/private_key
+        wgr-1:
+          ansible_host: 192.0.2.101
+          ansible_ssh_private_key_file: .vagrant/machines/wgr-1/virtualbox/private_key
+          wgr_params:
+            wg0:
+              Address: 198.51.100.1/24
+              ListenPort: 51820
+              EIGRPRouterID: 64513
+              RouterAddress: 203.0.113.1/25
+              EIGRPRouterBlackListedInterfaces: ['enp0s8']
+          netplan_etc_configs:
+            50-br1:
+              network:
+                version: 2
+                bridges:
+                  br1:
+                    addresses:
+                      - 10.0.0.1/32
+        wgr-2:
+          ansible_host: 192.0.2.102
+          ansible_ssh_private_key_file: .vagrant/machines/wgr-2/virtualbox/private_key
+          wgr_params:
+            wg0:
+              Address: 198.51.100.2/24
+              ListenPort: 51820
+              EIGRPRouterID: 64513
+              RouterAddress: 203.0.113.2/25
+              EIGRPRouterBlackListedInterfaces: ['enp0s8']
+          netplan_etc_configs:
+            50-br1:
+              network:
+                version: 2
+                bridges:
+                  br1:
+                    addresses:
+                      - 10.0.0.2/32
+        wgr-3:
+          ansible_host: 192.0.2.103
+          ansible_ssh_private_key_file: .vagrant/machines/wgr-3/virtualbox/private_key
+          wgr_params:
+            wg0:
+              Address: 198.51.100.3/24
+              ListenPort: 51820
+              EIGRPRouterID: 64513
+              RouterAddress: 203.0.113.3/25
+              EIGRPRouterBlackListedInterfaces: ['enp0s8']
+          netplan_etc_configs:
+            50-br1:
+              network:
+                version: 2
+                bridges:
+                  br1:
+                    addresses:
+                      - 10.0.0.3/32
+        wgr-4:
+          ansible_host: 192.0.2.104
+          ansible_ssh_private_key_file: .vagrant/machines/wgr-4/virtualbox/private_key
+          wgr_params:
+            wg0:
+              Address: 198.51.100.4/24
+              ListenPort: 51820
+              EIGRPRouterID: 64513
+              RouterAddress: 203.0.113.4/25
+              EIGRPRouterBlackListedInterfaces: ['enp0s8']
+          netplan_etc_configs:
+            50-br1:
+              network:
+                version: 2
+                bridges:
+                  br1:
+                    addresses:
+                      - 10.0.0.4/32
+        wgr-5:
+          ansible_host: 192.0.2.105
+          ansible_ssh_private_key_file: .vagrant/machines/wgr-5/virtualbox/private_key
+          wgr_params:
+            wg0:
+              Address: 198.51.100.5/24
+              ListenPort: 51820
+              EIGRPRouterID: 64513
+              RouterAddress: 203.0.113.5/25
+              EIGRPRouterBlackListedInterfaces: ['enp0s8']
+          netplan_etc_configs:
+            50-br1:
+              network:
+                version: 2
+                bridges:
+                  br1:
+                    addresses:
+                      - 10.0.0.5/32

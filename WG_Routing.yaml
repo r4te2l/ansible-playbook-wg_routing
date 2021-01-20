@@ -1,0 +1,79 @@
+---
+- name: "Wireguard Routing"
+
+  hosts: all
+
+  vars_files:
+    - 'vars/main.yml'
+
+  pre_tasks:
+    - name: 'Include OS Specific Vars'
+      include_vars: "{{ item }}"
+      with_first_found:
+        - "vars/{{ ansible_distribution }}.yml"
+        - "vars/{{ ansible_os_family }}.yml"
+        - "vars/generic_os.yml"
+
+    - name: 'Define Parameters'
+      include_tasks: 'tasks/pre_tasks/main.yml'
+
+  tasks:
+    - name: 'Install Ubuntu HWE'
+      include_role:
+        name: ubuntu_hwe
+      when: ansible_distribution == 'Ubuntu'
+    - meta: flush_handlers
+
+    - name: 'Manages kernel parameters'
+      include_role:
+        name: sysctl
+    - meta: flush_handlers
+
+    - name: 'Install prerequisite packages'
+      include_tasks: 'tasks/prerequisites.yml'
+      when: not inventory_hostname == wb_bastion_host
+
+    - name: 'Bastion : Generate And Pull WG Keys'
+      when: inventory_hostname == wb_bastion_host
+      block:
+        - name: 'Bastion : Install Wireguard'
+          include_role:
+            name: wireguard
+          vars:
+            wg_configs: {}
+
+        - name: 'Bastion : Manage WG Keys'
+          include_tasks: 'tasks/bastion/wg_keys.yml'
+          loop: "{{ wg_routing_bastion_keys }}"
+          loop_control:
+            loop_var: wg_key_path
+
+    - name: 'WG Routing'
+      when: inventory_hostname != wb_bastion_host
+      block:
+        - name: "Manage Netplan"
+          include_role:
+            name: netplan
+        - name: "Bastion : Copy WG Keys"
+          include_tasks: 'tasks/bastion/copy_wg_keys.yml'
+
+        - name: "Generate Wireguard wg_configs"
+          set_fact:
+            wg_configs: "{{ lookup('template', 'templates/vars/wg_configs.yaml.j2') | from_yaml }}"
+
+        - name: 'Manage Wireguard'
+          include_role:
+            name: wireguard
+
+        - name: 'Update ansible_facts'
+          gather_facts:
+
+        - name: "Generate FRR frr_config_eigrp_raw"
+          set_fact:
+            frr_config_eigrp_raw: "{{ lookup('template', 'templates/vars/frr_config_eigrp_raw.yaml.j2') }}"
+
+        - name: 'Manage FRR'
+          include_role:
+            name: frr
+
+    - meta: flush_handlers
